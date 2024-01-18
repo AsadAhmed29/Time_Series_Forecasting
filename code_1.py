@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf 
-print(tf.version)
 from tensorflow.keras.models import load_model
 
 
@@ -30,37 +29,37 @@ df['Close'] = df['Close'].fillna(df['Close'].rolling(window=5, center=True , min
 df['Volume'] = df['Volume'].fillna(df['Volume'].rolling(window=5, center=True , min_periods=1).apply(custom_mean))
 df['Volume'] = df['Volume'].fillna(df['Volume'].rolling(window=5, center=True , min_periods=1).apply(custom_mean))
 
-#FEATURE UNDERSTANDING 
+# #FEATURE UNDERSTANDING 
 
-plt.plot(df.index, df['Close'])
-plt.xlabel('Time')
-plt.ylabel('Closing Stock Price')
-plt.title('Stock Value Over the Years')
-plt.show() #Shows Closing Stock Prices over the Years
+# plt.plot(df.index, df['Close'])
+# plt.xlabel('Time')
+# plt.ylabel('Closing Stock Price')
+# plt.title('Stock Value Over the Years')
+# plt.show() #Shows Closing Stock Prices over the Years
 
-plt.plot(df.index, df['Volume'])
-plt.xlabel('Time')
-plt.ylabel('Volume Traded')
-plt.title('Volume Traded Over the Years')
-plt.show()# Shows trends for volume traded over the years
+# plt.plot(df.index, df['Volume'])
+# plt.xlabel('Time')
+# plt.ylabel('Volume Traded')
+# plt.title('Volume Traded Over the Years')
+# plt.show()# Shows trends for volume traded over the years
 
-plt.plot(df.index, df['Open'])
-plt.xlabel('Time')
-plt.ylabel('Opening Stock Price')
-plt.title('Opening Stock Price Over the Years')
-plt.show()#Shows Opening Stock Prices over the Years
+# plt.plot(df.index, df['Open'])
+# plt.xlabel('Time')
+# plt.ylabel('Opening Stock Price')
+# plt.title('Opening Stock Price Over the Years')
+# plt.show()#Shows Opening Stock Prices over the Years
 
-plt.plot(df.index, df['High'])
-plt.xlabel('Time')
-plt.ylabel('Daily Highest trading Price ')
-plt.title('Trading Highs Over the Years')
-plt.show()# Shows trends for Daily highest trading price over the years
+# plt.plot(df.index, df['High'])
+# plt.xlabel('Time')
+# plt.ylabel('Daily Highest trading Price ')
+# plt.title('Trading Highs Over the Years')
+# plt.show()# Shows trends for Daily highest trading price over the years
 
-plt.plot(df.index, df['Low'])
-plt.xlabel('Time')
-plt.ylabel('Daily Lowesr trading Price ')
-plt.title('Trading Lows Over the Years')
-plt.show()# Shows trends for Daily highest trading price over the years
+# plt.plot(df.index, df['Low'])
+# plt.xlabel('Time')
+# plt.ylabel('Daily Lowesr trading Price ')
+# plt.title('Trading Lows Over the Years')
+# plt.show()# Shows trends for Daily highest trading price over the years
 
 #
 # UNIVARIATE PREDICTION USING LSTM
@@ -108,11 +107,42 @@ model.add(LSTM(50, return_sequences = False))
 model.add(Dense(25))
 model.add(Dense(1))
 
-#Compiling
-model.compile( optimizer = 'adam' , loss = 'mean_squared_error')
-
-#Training 
-#model.fit(x_train , y_train , batch_size = 1, epochs =10)       #trained on Google Colab
-
 # Load the saved model
 open_model = load_model('Open_trained_model.h5')
+
+#Creating test data
+test_array = scaled_array[training_array_len-training_days: ,: ]
+
+x_test = []
+y_test = one_feature_array[training_array_len: ,:]
+len(y_test)
+
+for i in range(training_days, len(test_array)):
+  x_test.append(test_array[i-training_days:i])
+
+x_test = np.array(x_test) #Converting into array
+x_test = np.reshape(x_test , (x_test.shape[0], x_test.shape[1], 1)) #Reshaping into 3D
+
+# #Making Predictions
+# predictions = open_model.predict(x_test)
+# predictions = scaler.inverse_transform(predictions)
+
+# rmse = np.sqrt(np.mean(predictions-y_test)**2)
+# accuracy = rmse
+
+# #Plotting
+# import matplotlib.pyplot as plt
+
+# train_data_actual = one_feature_df[:training_array_len]
+# test_data_actual = one_feature_df[training_array_len:]
+# test_data_actual['Predictions'] = predictions
+
+
+# plt.figure(figsize = (12,8))
+# plt.xlabel('Date')
+# plt.ylabel('Open Price USD$')
+# plt.plot(train_data_actual , label = 'Training data')
+# plt.plot(test_data_actual[['Open' , 'Predictions']] , label = ['Actual test values' , 'Predicted Test Values'] )
+# plt.legend()
+# plt.show()
+print('5')
