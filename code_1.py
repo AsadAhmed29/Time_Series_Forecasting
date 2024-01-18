@@ -180,3 +180,48 @@ validate_and_plot('Volume', volume_model , 'Traded Volume')
 
 
 
+##############################################
+#Multivariate Analysis of Closing Stock Prices#
+##############################################
+df_for_training = df.copy()
+from sklearn.preprocessing import MinMaxScaler
+scaler = MinMaxScaler(feature_range=(0,1))
+scaled_df = scaler.fit_transform(df_for_training)
+
+#Input Reshaping
+training_len  = np.int64(len(scaled_df)*0.8)
+training_data = scaled_df[0:training_len]
+training_days = 45
+
+
+#Splitting Data into Train Data
+X_train = []
+Y_train = []
+
+for i in range(training_days,training_len):
+    X_train.append(training_data[i-training_days:i])
+    Y_train.append(training_data[i,3])
+
+X_train = np.array(X_train)
+Y_train = np.array(Y_train)
+
+X_train = np.reshape(X_train, (X_train.shape[0], training_days, 5))
+
+#Building the model
+from keras.models import Sequential
+from keras.layers import Dense, LSTM
+
+
+final_model = Sequential()
+final_model.add(LSTM(50, return_sequences = True , input_shape = (X_train.shape[1], X_train.shape[2]) ) )
+final_model.add(LSTM(50, return_sequences = False))
+final_model.add(Dense(25))
+final_model.add(Dense(1))
+
+#Compiling
+final_model.compile( optimizer = 'adam' , loss = 'mean_squared_error')
+
+#Training the model
+final_model.fit(X_train , Y_train , batch_size = 1, epochs =10)
+
+
