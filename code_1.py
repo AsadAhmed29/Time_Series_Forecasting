@@ -155,5 +155,28 @@ def validate_and_plot(target ,model, ylabel):
   plt.legend()
   return plt.show()
 
+#open_model = uni_variate_training('Open')     # Trained and saved on colab#
+#save_model(open_model, 'open_model.h5')       #                           #
+
+
+open_model = load_model('open_model.h5')
+validate_and_plot('Open' , open_model, 'Opening Stock Prices $')
+
+
+#high_model = uni_variate_training('High')      # Trained and saved on colab#
+#save_model(high_model, 'high_model.h5')        #                           #
+high_model = load_model('high_model.h5')
+validate_and_plot('High', high_model , 'Highest Price of the Day $')
+
+#low_model = uni_variate_training('Low')        # Trained and saved on colab#
+#save_model(low_model, 'low_model.h5')          #                           #
+low_model = load_model('low_model.h5')
+validate_and_plot('Low', low_model , 'Lowest Price of the Day $')
+
+#volume_model = uni_variate_training('Volume')  # Trained and saved on colab#
+#save_model(volume_model, 'volume_model.h5')    #                           #
+Volume_model = load_model('volume_model.h5')
+validate_and_plot('Volume', volume_model , 'Traded Volume')
+
 
 
