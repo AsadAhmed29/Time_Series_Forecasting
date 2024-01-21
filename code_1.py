@@ -32,39 +32,38 @@ df['Volume'] = df['Volume'].fillna(df['Volume'].rolling(window=5, center=True , 
 
 # #FEATURE UNDERSTANDING 
 
-# plt.plot(df.index, df['Close'])
-# plt.xlabel('Time')
-# plt.ylabel('Closing Stock Price')
-# plt.title('Stock Value Over the Years')
-# plt.show() #Shows Closing Stock Prices over the Years
+cor_matrix = df.corr()
 
-# plt.plot(df.index, df['Volume'])
-# plt.xlabel('Time')
-# plt.ylabel('Volume Traded')
-# plt.title('Volume Traded Over the Years')
-# plt.show()# Shows trends for volume traded over the years
+def line_plot( x, y, xlabel , ylabel , title):
 
-# plt.plot(df.index, df['Open'])
-# plt.xlabel('Time')
-# plt.ylabel('Opening Stock Price')
-# plt.title('Opening Stock Price Over the Years')
-# plt.show()#Shows Opening Stock Prices over the Years
+  plt.plot(x, y)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  #plt.title(title)
+  return plt.show() ,title
 
-# plt.plot(df.index, df['High'])
-# plt.xlabel('Time')
-# plt.ylabel('Daily Highest trading Price ')
-# plt.title('Trading Highs Over the Years')
-# plt.show()# Shows trends for Daily highest trading price over the years
+def scatter_plot(y1,y2 , xlabel , ylabel , title , c):
+  fig, ax = plt.subplots(figsize=(10, 6))
+  ax.scatter(df[y1], df[y2] , c = df[y2], cmap =c)
+  ax.set_xlabel(xlabel)
+  ax.set_ylabel(ylabel)
+  ax.set_title(title)
 
-# plt.plot(df.index, df['Low'])
-# plt.xlabel('Time')
-# plt.ylabel('Daily Lowesr trading Price ')
-# plt.title('Trading Lows Over the Years')
-# plt.show()# Shows trends for Daily highest trading price over the years
+  return plt.show(),title
 
-#
+def create_histogram(data, xlabel, ylabel, title, bins=10, color='blue', alpha=0.7):
+  plt.hist(data, bins=bins, color=color, alpha=alpha)
+  plt.xlabel(xlabel)
+  plt.ylabel(ylabel)
+  plt.title(title)
+  plt.show()
+
+  return plt.show() , title
+
+
+##################################
 # UNIVARIATE PREDICTION USING LSTM
-#
+##################################
 
 # # DATA PRE PROCESSING#
 
@@ -157,7 +156,7 @@ def validate_and_plot(target ,model, ylabel):
   return plt.show()
 
 #open_model = uni_variate_training('Open')     # Trained and saved on colab#
-#save_model(open_model, 'open_model.h5')       #                           #
+#save_model(open_model, 'open_model.h5')       # ###########################
 
 
 open_model = load_model('open_model.h5')
@@ -165,17 +164,17 @@ validate_and_plot('Open' , open_model, 'Opening Stock Prices $')
 
 
 #high_model = uni_variate_training('High')      # Trained and saved on colab#
-#save_model(high_model, 'high_model.h5')        #                           #
+#save_model(high_model, 'high_model.h5')        # ###########################
 high_model = load_model('high_model.h5')
 validate_and_plot('High', high_model , 'Highest Price of the Day $')
 
 #low_model = uni_variate_training('Low')        # Trained and saved on colab#
-#save_model(low_model, 'low_model.h5')          #                           #
+#save_model(low_model, 'low_model.h5')          #  ##########################
 low_model = load_model('low_model.h5')
 validate_and_plot('Low', low_model , 'Lowest Price of the Day $')
 
 #volume_model = uni_variate_training('Volume')  # Trained and saved on colab#
-#save_model(volume_model, 'volume_model.h5')    #                           #
+#save_model(volume_model, 'volume_model.h5')    # ###########################
 volume_model = load_model('volume_model.h5')
 validate_and_plot('Volume', volume_model , 'Traded Volume')
 
