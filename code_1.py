@@ -362,6 +362,11 @@ def predict_future_final(df, model, days_to_predict):
           #next_date += timedelta(days=1)
   return df_tar
 
+
+############################################
+# PLOTTING RESULTS##########################
+############################################
+
 final_df = predict_future_final(df_with_predicted_features,final_model,days_to_predict)
 print(final_df.tail(15))
 
