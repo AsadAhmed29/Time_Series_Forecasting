@@ -363,5 +363,15 @@ def predict_future_final(df, model, days_to_predict):
           #next_date += timedelta(days=1)
   return df_tar
 
+final_df = predict_future_final(df_with_predicted_features,final_model,days_to_predict)
+print(final_df.tail(15))
 
+plt.figure(figsize = (12,8))
+plt.xlabel('Date')
+plt.ylabel('Close Price USD$')
+plt.plot(final_df.loc[final_df.index[-500:-days_to_predict],'Close']  , label ='Actual Data'  )
+
+plt.plot(final_df.loc[final_df.index[-days_to_predict:],'Close']  , label ='Prediction'  )
+plt.legend()
+plt.show()
 
