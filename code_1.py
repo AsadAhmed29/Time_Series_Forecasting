@@ -304,3 +304,23 @@ def predict_future(df, target, model, days_to_predict):
 # Get user input for the number of days to predict
 days_to_predict = int(input("Enter the number of days to predict: "))
 
+
+####################################
+# Predict future values of features#
+####################################
+def predict_features(days_to_predict):
+  df_open = predict_future(df, 'Open', open_model, days_to_predict)
+  df_high = predict_future(df, 'High', high_model, days_to_predict)
+  df_low = predict_future(df, 'Low' , low_model, days_to_predict)
+  df_volume = predict_future(df, 'Volume' , volume_model , days_to_predict)
+  df_close = df['Close']
+  next_date = df_close.index[-1] + timedelta(days=1)
+  for value in range(days_to_predict):
+    df_close.loc[next_date] = 0
+    next_date += timedelta(days=1)
+
+  df_with_predicted_features = pd.concat([df_open , df_high,df_low, df_close , df_volume, ] ,axis= 1)
+  return df_with_predicted_features
+
+df_with_predicted_features = predict_features(days_to_predict)
+
