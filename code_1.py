@@ -5,6 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
+from datetime import timedelta
 
 
 
@@ -175,7 +176,7 @@ validate_and_plot('Low', low_model , 'Lowest Price of the Day $')
 
 #volume_model = uni_variate_training('Volume')  # Trained and saved on colab#
 #save_model(volume_model, 'volume_model.h5')    #                           #
-Volume_model = load_model('volume_model.h5')
+volume_model = load_model('volume_model.h5')
 validate_and_plot('Volume', volume_model , 'Traded Volume')
 
 
@@ -187,7 +188,6 @@ df_for_training = df.copy()
 from sklearn.preprocessing import MinMaxScaler
 scaler = MinMaxScaler(feature_range=(0,1))
 scaled_df = scaler.fit_transform(df_for_training)
-
 #Input Reshaping
 training_len  = np.int64(len(scaled_df)*0.8)
 training_data = scaled_df[0:training_len]
@@ -224,4 +224,83 @@ final_model.compile( optimizer = 'adam' , loss = 'mean_squared_error')
 #Training the model
 final_model.fit(X_train , Y_train , batch_size = 1, epochs =10)
 
+
+#####################
+#TESTING#############
+#####################
+
+#Creating test Data
+test_df = scaled_df[training_len-45: ,: ]
+
+X_test = []
+Y_test = df_for_training.values[training_len : ,3]
+
+for i in range(45, len(test_df)):
+  X_test.append(test_df[i-45:i])
+
+X_test = np.array(X_test) #Converting into array
+X_test = np.reshape(X_test , (X_test.shape[0], X_test.shape[1], 5)) #Reshaping into 3D
+X_test.shape
+
+#Predictions
+predictions = final_model.predict(X_test)
+prediction_copies = np.repeat(predictions , 5 , axis =-1)
+predictions = scaler.inverse_transform(prediction_copies)
+predictions = predictions[:,0]
+
+########################
+#PLOTTING###############
+########################
+
+train_data_actual = df_for_training[:training_len]
+test_data_actual = df_for_training[training_len:]
+test_data_actual['Predictions'] = predictions
+print(test_data_actual.loc[:,['Close','Predictions']])
+
+plt.figure(figsize = (12,8))
+plt.xlabel('Date')
+plt.ylabel('Closing Price USD$')
+plt.plot(train_data_actual['Close'] , label = 'Training data')
+plt.plot(test_data_actual[['Close' , 'Predictions']] , label = ['Actual test values' , 'Predicted Test Values'] )
+plt.legend()
+plt.show()
+
+
+
+########################
+#PREDICTING FUTURE######
+########################
+# Number of days for the sliding window
+window_size = 45
+
+scaler = MinMaxScaler(feature_range=(0,1))
+# Function to predict future values
+def predict_future(df, target, model, days_to_predict):
+    df_target = df[target].copy()
+    window = df_target.values.reshape(-1,1)
+    scaler.fit(window)
+
+    for i in range(0,days_to_predict):
+        # Create a window of the last 'window_size' days
+        window = df_target.values[-window_size:]
+        window = window.reshape(-1,1)
+        window = scaler.transform(window)
+        window = np.array(window) #Converting into array
+        window = np.reshape(window , (1,window.shape[0], 1))
+
+        # Make a prediction for the next day
+        prediction = model.predict(window)
+        prediction = scaler.inverse_transform(prediction.reshape(-1,1))
+        # Append the predicted value to the DataFrame
+        next_date = df_target.index[-1] + timedelta(days=1)
+        for value in prediction.flatten():
+            df_target.loc[next_date] = value
+            next_date += timedelta(days=1)
+
+        # Concatenate the new DataFrame to the original DataFrame
+
+    return df_target
+
+# Get user input for the number of days to predict
+days_to_predict = int(input("Enter the number of days to predict: "))
 
