@@ -324,3 +324,44 @@ def predict_features(days_to_predict):
 
 df_with_predicted_features = predict_features(days_to_predict)
 
+final_model = load_model('final_model.h5')
+
+# Number of days for the sliding window
+window_size = 45
+
+scaler = MinMaxScaler(feature_range=(0,1))
+
+############################################
+# Function to predict future Closing values#
+############################################
+def predict_future_final(df, model, days_to_predict):
+
+  df_tar = df.copy()
+  window = df_tar.values.reshape(-1,5)
+  scaler.fit(window)
+
+  for i in range(0,days_to_predict):
+      # Create a window of the last 'window_size' days
+      window = df_tar.values[-10+1-45:-10+1]
+      window = window.reshape(-1,5)
+      window = scaler.transform(window)
+      window = np.array(window) #Converting into array
+      window = np.reshape(window , (1,window.shape[0], 5))
+      
+
+      # Make a prediction for the next day
+      prediction = model.predict(window)
+      prediction_copies = np.repeat(prediction , 5 , axis =-1)
+      prediction = scaler.inverse_transform(prediction_copies)
+      prediction = prediction[:,0]
+      # Append the predicted value to the DataFrame
+      # next_date = df['date'].max() + timedelta(days=1)
+      # df_target = df.append({ target: prediction}, ignore_index=True)
+      #next_date = df_target.index[-1] + timedelta(days=1)
+      for value in prediction.flatten():
+          df_tar.loc[df_tar.index[-days_to_predict+i], 'Close'] = value
+          #next_date += timedelta(days=1)
+  return df_tar
+
+
+
