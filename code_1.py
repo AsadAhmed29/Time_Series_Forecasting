@@ -6,6 +6,7 @@ import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
+import seaborn as sns
 from datetime import timedelta
 
 
@@ -16,7 +17,7 @@ df_uncleaned = pd.read_csv('Amazon Data.csv')
 #DATA CLEANING#
 ###############
 
-copied_df = df.copy()
+copied_df = df_uncleaned.copy()
 
 df_uncleaned.index = pd.to_datetime(df_uncleaned['Date']) #Setting Date coloumn as index and converting it into date time object
 years = df_uncleaned.index.year
@@ -148,7 +149,68 @@ if cl_data_description_button:
   st.write(df.describe().T)
 
 
+##################################
+#####ADDING EDA TO STREAMLIT######
+##################################
+  
 
+# EDA Section
+st.header("Exploratory Data Analysis (EDA)")
+
+# Dropdown for selecting relationships
+selected_relationship = st.selectbox("Select Relationship:", ['Corelation Matrix' ,"Closing Stock Price over the Years", "Volume Traded Over the Years", 'Closing Price Distribution',
+'Open vs Close', 'Volume vs Close' , 'Volume Distribution' ])
+
+# Button to trigger the plot
+plot_button = st.button("Plot")
+
+# Placeholder for the plot
+plot_placeholder = st.empty()
+
+# Check if the button is pressed
+if plot_button:
+  if selected_relationship == 'Corelation Matrix':
+    st.subheader("Correlation Heatmap")
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(cor_matrix, annot=True, cmap='coolwarm', fmt=".2f", linewidths=.5)
+    plot_placeholder = st.pyplot()
+    st.write("In the correlation matrix, a strong positive correlation of 1 is observed between Opening Prices, High Prices, Low Prices, and the target variable, indicating a linear relationship where as one variable increases, the others also increase proportionally. This high correlation implies a tight connection among these stock features. However, Volume Traded displays a weaker correlation with the rest of the variables, suggesting a less direct linear relationship. This distinction suggests that the trading volume may not follow the same patterns as the Opening, High, Low prices, and the target variable. The divergence in correlation strengths provides valuable insights into the unique behavior of the trading volume compared to other stock metrics.")
+
+  elif selected_relationship == 'Closing Stock Price over the Years':
+    plot_placeholder ,title = line_plot(df.index,df['Close'] , 'Years' , 'Closing Stock Price $' , 'Closing Stock Price over the Years' )
+    st.subheader(title)
+    st.pyplot()
+    st.write("This graph shows the Closing price of the Amazon Stocks over the years depicting a steady growth after 2012 until the most significant peak after 2020 probably due to a new wave of online shopping post covid-19 ")
+
+  elif selected_relationship == 'Volume Traded Over the Years':
+    plot_placeholder ,title = line_plot(df.index, df['Volume'] , 'Years' , 'Volume Traded' , 'Volume of Shares Traded over the Years' )
+    st.subheader(title)
+    st.pyplot()
+    st.write("The graph depicting the volume of shares traded over the years reveals a notable trend. In the initial years, up to 2005, there was a substantial surge in trading volume, coinciding with a period when the stock prices were relatively low. This suggests a heightened interest in trading during that period, possibly driven by increased market activity or specific events. However, as the years progressed, there was a consistent decline in trading volume despite a concurrent rise in stock prices. This divergence implies a shift in market dynamics, where the trading activity dwindled even as the stock values appreciated. Such a scenario could be indicative of a market transformation, possibly influenced by changes in investor behavior, market structure, or external factors impacting trading patterns.")
+
+  elif selected_relationship == 'Open vs Close':
+    plot_placeholder ,title = scatter_plot('Open' , 'Close' , 'Opening Prices' , 'Closing Prices' , 'Relationship between Opening and Closing Prices' , 'plasma')
+    st.subheader(title)
+    st.pyplot(plot_placeholder)
+    st.write("This scatter plot shows the strong linear relationship between the two values as it could be seen in the Correlation Matrix. The colomns 'High' and 'Low' depicts the same trend and are therefore not plotted.")
+
+  elif selected_relationship == 'Volume vs Close':
+    plot_placeholder ,title = scatter_plot('Close' , 'Volume' , 'Closing Prices' , 'Volume of Shares Traded' , 'Relationship between Volume of Shares Traded and Closing Price', 'inferno')
+    st.subheader(title)
+    st.pyplot()
+    st.write("This graph shows the weak negative correlation between the volume of shares traded and the closing prices same as it is shown in the correlation  matrix.The amount of shares traded was relatively high in the initial years when the prices were comparitively low. ")
+  
+  elif selected_relationship == 'Closing Price Distribution':
+    plot_placeholder ,title = create_histogram(df['Close'] , 'Closing Prices' , 'Frequency' , 'Distribution of Stock Prices', color = 'red')
+    st.subheader(title)
+    st.pyplot()
+    st.write("The right skewed distribution of the closing stock price shows that for the most amount of time, the stock prices stayed between 0-20 $ before having an constant upward growth (in 2012 as shown in the Line plot of Closing prices) ")
+
+  elif selected_relationship == 'Volume Distribution':
+    plot_placeholder ,title = create_histogram(df['Volume'] , 'Volume of Shares Traded' , 'Frequency' , 'Distribution of Stock Prices', color = 'red')
+    st.subheader(title)
+    st.pyplot()
+    St.write("The right skewed distribution of the volumes traded depicts that mostly the amount of shares traded in a day lie between 0-300 million shares with occasional significant surge in trading activities")
 
 
 ##################################
