@@ -2,6 +2,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import streamlit as st
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf 
 from tensorflow.keras.models import load_model
@@ -9,16 +10,19 @@ from datetime import timedelta
 
 
 
-df = pd.read_csv('Amazon Data.csv')
+df_uncleaned = pd.read_csv('Amazon Data.csv')
 
+###############
 #DATA CLEANING#
+###############
+
 copied_df = df.copy()
 
-df.index = pd.to_datetime(df['Date']) #Setting Date coloumn as index and converting it into date time object
-years = df.index.year
-months = df.index.month
-days = df.index.day
-df = df.drop(['Date' , 'Adj Close','Company'] , axis =1 ) #Dropping iniial Date coloumn, adj close and company to avoid duplication and redundancy
+df_uncleaned.index = pd.to_datetime(df_uncleaned['Date']) #Setting Date coloumn as index and converting it into date time object
+years = df_uncleaned.index.year
+months = df_uncleaned.index.month
+days = df_uncleaned.index.day
+df = df_uncleaned.drop(['Date' , 'Adj Close','Company'] , axis =1 ) #Dropping iniial Date coloumn, adj close and company to avoid duplication and redundancy
 df = df.sort_index() 
 
 def custom_mean(series):
@@ -59,6 +63,92 @@ def create_histogram(data, xlabel, ylabel, title, bins=10, color='blue', alpha=0
   plt.show()
 
   return plt.show() , title
+
+########################
+#INITIALIZING STREAMLIT#
+########################
+
+st.title("Stock Price Prediction Web App")
+st.write("""
+Welcome to the Stock Price Prediction App. This app explores stock data, visualizes relationships, and predicts future prices.
+
+### Project Summary:
+This project focuses on three key aspects:
+
+1. **Exploratory Data Analysis (EDA):**
+   - Explore the relationships among different stock features.
+   - Select various plots to analyze the trends in stock data.
+
+2. **Actual vs. Predicted Values:**
+   - Visualize the actual closing stock prices alongside model predictions.
+   - Compare how well the model captures the actual trends.
+
+3. **Stock Price Forecasting:**
+   - Enter the number of days you want predictions for.
+   - Utilize the trained model to forecast future stock prices.
+
+Explore each aspect using the sidebar menu on the left. Have an insightful journey into the world of stock price prediction!
+
+*Note: For forecasting, you can use a trained model and provide the number of days for predictions.*
+
+""")
+#####################
+#Adding Sidebar######
+#####################
+workflow_button = st.sidebar.button("Workflow")
+
+if workflow_button:
+    st.header('WORKFLOW')
+    st.write(
+        """
+        ## Data Cleaning and Exploration:
+        The data cleaning process involved handling missing values in the stock dataset. Null values in the 'Open,' 'Close,' 'High,' 'Low,' and 'Volume' columns were filled using a rolling mean approach. This ensured avoiding a significant change in the mean values of the coloumns which is evident from the Data Description of uncleaned and cleaned dataset
+
+        ## Exploratory Data Analysis (EDA):
+        The EDA section of the app allows users to explore various relationships within the stock dataset. Users can choose from a selection of plots, including a correlation matrix heatmap, closing stock prices over the years, volume traded over the years, scatter plots depicting relationships between different features, and distribution plots for closing prices and trading volumes.
+
+        ## Univariate Prediction Models:
+        The app provides insights into univariate prediction models for individual stock features (Open, High, Low, and Volume). LSTM (Long Short-Term Memory) neural networks were employed for training these models. After training, users can visualize the model's predictions against actual values for the training and test datasets.
+
+        ## Multivariate Prediction Model:
+        A multivariate prediction model was developed to forecast the closing stock prices. The model considers a window of the last 45 days to make predictions for the next day. LSTM layers are used in the neural network architecture for this purpose. The actual vs. predicted closing prices are then visualized.
+
+        ## Forecasting
+        The forecasting section enables users to predict future stock prices. Users can input the number of days they want to predict, and the app leverages the trained models to provide forecasts. The process involves predicting future values for open, high, low, close, and volume features using univariate trained models. These predicted features are taken as input to predict the closing stock Price using Multivariate trained Model. Finally, the app visualizes the predicted closing prices alongside the actual data.
+
+
+        """
+    )
+
+st.sidebar.header('UNCLEANED DATA')
+
+data_set_button = st.sidebar.button('Uncleaned Dataset')
+if data_set_button:
+  st.subheader('Dataset')
+  st.write(df_uncleaned)
+
+data_description_button = st.sidebar.button('Uncleaned Data Description')
+if data_description_button:
+  st.subheader('Data Description')
+  st.write(df_uncleaned.describe().T)
+
+
+
+
+st.sidebar.header('CLEANED DATA')
+
+cl_data_set_button = st.sidebar.button('Cleaned Dataset')
+if cl_data_set_button:
+  st.subheader('Dataset')
+  st.write(df)
+
+cl_data_description_button = st.sidebar.button('Cleaned Data Description')
+if cl_data_description_button:
+  st.subheader('Data Description')
+  st.write(df.describe().T)
+
+
+
 
 
 ##################################
@@ -364,7 +454,7 @@ def predict_future_final(df, model, days_to_predict):
 
 
 ############################################
-# PLOTTING RESULTS##########################
+########### PLOTTING RESULTS################
 ############################################
 
 final_df = predict_future_final(df_with_predicted_features,final_model,days_to_predict)
