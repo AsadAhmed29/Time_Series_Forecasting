@@ -373,48 +373,94 @@ final_model.add(Dense(1))
 final_model.compile( optimizer = 'adam' , loss = 'mean_squared_error')
 
 #Training the model
-final_model.fit(X_train , Y_train , batch_size = 1, epochs =10)
+#final_model.fit(X_train , Y_train , batch_size = 1, epochs =10)
 
 
-#####################
-#TESTING#############
-#####################
 
-#Creating test Data
-test_df = scaled_df[training_len-45: ,: ]
-
-X_test = []
-Y_test = df_for_training.values[training_len : ,3]
-
-for i in range(45, len(test_df)):
-  X_test.append(test_df[i-45:i])
-
-X_test = np.array(X_test) #Converting into array
-X_test = np.reshape(X_test , (X_test.shape[0], X_test.shape[1], 5)) #Reshaping into 3D
-X_test.shape
-
-#Predictions
-predictions = final_model.predict(X_test)
-prediction_copies = np.repeat(predictions , 5 , axis =-1)
-predictions = scaler.inverse_transform(prediction_copies)
-predictions = predictions[:,0]
 
 ########################
-#PLOTTING###############
+#ST TEST PLOTTING#######
 ########################
+# Validation Section
+st.header("Testing Trained Models")
 
-train_data_actual = df_for_training[:training_len]
-test_data_actual = df_for_training[training_len:]
-test_data_actual['Predictions'] = predictions
-print(test_data_actual.loc[:,['Close','Predictions']])
+# Dropdown for selecting relationships
+selected_model = st.selectbox("Select Model :", ['Univariate Prediction Model', 'Multivariate Prediction Model'])
 
-plt.figure(figsize = (12,8))
-plt.xlabel('Date')
-plt.ylabel('Closing Price USD$')
-plt.plot(train_data_actual['Close'] , label = 'Training data')
-plt.plot(test_data_actual[['Close' , 'Predictions']] , label = ['Actual test values' , 'Predicted Test Values'] )
-plt.legend()
-plt.show()
+# Button to trigger the plot
+test_button = st.button("Test and Plot")
+
+fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 8))
+
+if test_button:
+
+
+  if selected_model == 'Univariate Prediction Model':
+
+    st.subheader('UniVariate Prediction Model')
+    axes[0, 0].set_title('Open Stock Prices')
+    validate_and_plot('Open', open_model, 'Opening Stock Prices $', axes[0,0])
+
+    # Plot in the second subplot
+    axes[0, 1].set_title('Highest Trading Prices of the Day')
+    validate_and_plot('High', high_model, 'Highest Price of the Day $' , axes [0,1])
+
+    # Plot in the third subplot
+    axes[1, 0].set_title('Lowest Trading Prices of the Day')
+    validate_and_plot('Low', low_model, 'Lowest Price of the Day $',  axes[1,0])
+
+    # Plot in the fourth subplot
+    axes[1, 1].set_title('Volume of Shares Traded')
+    validate_and_plot('Volume', volume_model, 'Traded Volume $', axes[1,1] )
+
+    # Adjust layout
+    #plt.tight_layout()
+
+    # Show the entire figure
+    st.pyplot(fig)
+
+  elif selected_model == 'Multivariate Prediction Model':
+    st.subheader('Multivariate Prediction Model')
+    # #####################
+    # #TESTING#############
+    # #####################
+
+    final_model = load_model('final_model.h5')
+    #Creating test Data
+    test_df = scaled_df[training_len-45: ,: ]
+
+    X_test = []
+    Y_test = df_for_training.values[training_len : ,3]
+
+    for i in range(45, len(test_df)):
+      X_test.append(test_df[i-45:i])
+
+    X_test = np.array(X_test) #Converting into array
+    X_test = np.reshape(X_test , (X_test.shape[0], X_test.shape[1], 5)) #Reshaping into 3D
+
+    #Predictions
+    predictions = final_model.predict(X_test)
+    prediction_copies = np.repeat(predictions , 5 , axis =-1)
+    predictions = scaler.inverse_transform(prediction_copies)
+    predictions = predictions[:,0]
+
+    ########################
+    #TEST PLOTTING##########
+    ########################
+
+    train_data_actual = df_for_training[:training_len]
+    test_data_actual = df_for_training[training_len:]
+    test_data_actual['Predictions'] = predictions
+    print(test_data_actual.loc[:,['Close','Predictions']])
+
+    plt.figure(figsize = (12,8))
+    plt.xlabel('Date')
+    plt.ylabel('Closing Stock Price (USD$)')
+    plt.plot(train_data_actual['Close'] , label = 'Training data')
+    plt.plot(test_data_actual[['Close' , 'Predictions']] , label = ['Actual test values' , 'Predicted Test Values'] )
+    plt.legend()
+    plt.show()
+    st.pyplot()
 
 
 
