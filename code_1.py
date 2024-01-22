@@ -464,116 +464,119 @@ if test_button:
 
 
 
+
 ########################
 #PREDICTING FUTURE######
 ########################
-# Number of days for the sliding window
-window_size = 45
+st.header('Stock Price Forecasting')
+days_to_predict = st.number_input("Enter the number of days you want to predict the stock price for:", min_value=1, max_value=500, value=50)
 
-scaler = MinMaxScaler(feature_range=(0,1))
-# Function to predict future values
-def predict_future(df, target, model, days_to_predict):
-    df_target = df[target].copy()
-    window = df_target.values.reshape(-1,1)
+predict_button = st.button("Predict and Plot")
+
+if predict_button:
+
+
+  # Number of days for the sliding window
+  window_size = 45
+
+  scaler = MinMaxScaler(feature_range=(0,1))
+  # Function to predict future values
+  def predict_future(df, target, model, days_to_predict):
+      df_target = df[target].copy()
+      window = df_target.values.reshape(-1,1)
+      scaler.fit(window)
+
+      for i in range(0,days_to_predict):
+          # Create a window of the last 'window_size' days
+          window = df_target.values[-window_size:]
+          window = window.reshape(-1,1)
+          window = scaler.transform(window)
+          window = np.array(window) #Converting into array
+          window = np.reshape(window , (1,window.shape[0], 1))
+
+          # Make a prediction for the next day
+          prediction = model.predict(window)
+          prediction = scaler.inverse_transform(prediction.reshape(-1,1))
+          # Append the predicted value to the DataFrame
+          next_date = df_target.index[-1] + timedelta(days=1)
+          for value in prediction.flatten():
+              df_target.loc[next_date] = value
+              next_date += timedelta(days=1)
+
+
+      return df_target
+
+  ###################################
+  # Predict future values of features
+  ###################################
+  def predict_features(days_to_predict):
+    df_open = predict_future(df, 'Open', open_model, days_to_predict)
+    df_high = predict_future(df, 'High', high_model, days_to_predict)
+    df_low = predict_future(df, 'Low' , low_model, days_to_predict)
+    df_volume = predict_future(df, 'Volume' , volume_model , days_to_predict)
+    df_close = df['Close']
+    next_date = df_close.index[-1] + timedelta(days=1)
+    for value in range(days_to_predict):
+      df_close.loc[next_date] = 0
+      next_date += timedelta(days=1)
+
+    df_with_predicted_features = pd.concat([df_open , df_high,df_low, df_close , df_volume, ] ,axis= 1)
+    return df_with_predicted_features
+
+  df_with_predicted_features = predict_features(days_to_predict)
+
+  
+  
+  
+  #####################################
+  # Predict future Closing Stock Prices
+  #####################################
+
+
+  # Number of days for the sliding window
+  window_size = 45
+
+  scaler = MinMaxScaler(feature_range=(0,1))
+  # Function to predict future values
+  def predict_future_final(df, model, days_to_predict):
+
+    df_tar = df.copy()
+    window = df_tar.values.reshape(-1,5)
     scaler.fit(window)
 
     for i in range(0,days_to_predict):
         # Create a window of the last 'window_size' days
-        window = df_target.values[-window_size:]
-        window = window.reshape(-1,1)
+        window = df_tar.values[-10+1-45:-10+1]
+        window = window.reshape(-1,5)
         window = scaler.transform(window)
         window = np.array(window) #Converting into array
-        window = np.reshape(window , (1,window.shape[0], 1))
+        window = np.reshape(window , (1,window.shape[0], 5))
 
-        # Make a prediction for the next day
+
+        #Make a prediction for the next day
         prediction = model.predict(window)
-        prediction = scaler.inverse_transform(prediction.reshape(-1,1))
+        prediction_copies = np.repeat(prediction , 5 , axis =-1)
+        prediction = scaler.inverse_transform(prediction_copies)
+        prediction = prediction[:,0]
         # Append the predicted value to the DataFrame
-        next_date = df_target.index[-1] + timedelta(days=1)
+        # next_date = df['date'].max() + timedelta(days=1)
+        # df_target = df.append({ target: prediction}, ignore_index=True)
+        #next_date = df_target.index[-1] + timedelta(days=1)
         for value in prediction.flatten():
-            df_target.loc[next_date] = value
-            next_date += timedelta(days=1)
-
-        # Concatenate the new DataFrame to the original DataFrame
-
-    return df_target
-
-# Get user input for the number of days to predict
-days_to_predict = int(input("Enter the number of days to predict: "))
+            df_tar.loc[df_tar.index[-days_to_predict+i], 'Close'] = value
+            #next_date += timedelta(days=1)
+    return df_tar
 
 
-####################################
-# Predict future values of features#
-####################################
-def predict_features(days_to_predict):
-  df_open = predict_future(df, 'Open', open_model, days_to_predict)
-  df_high = predict_future(df, 'High', high_model, days_to_predict)
-  df_low = predict_future(df, 'Low' , low_model, days_to_predict)
-  df_volume = predict_future(df, 'Volume' , volume_model , days_to_predict)
-  df_close = df['Close']
-  next_date = df_close.index[-1] + timedelta(days=1)
-  for value in range(days_to_predict):
-    df_close.loc[next_date] = 0
-    next_date += timedelta(days=1)
 
-  df_with_predicted_features = pd.concat([df_open , df_high,df_low, df_close , df_volume, ] ,axis= 1)
-  return df_with_predicted_features
+  final_df = predict_future_final(df_with_predicted_features,final_model,days_to_predict)
+  st.write(final_df.tail(days_to_predict+5))
 
-df_with_predicted_features = predict_features(days_to_predict)
+  plt.figure(figsize = (12,8))
+  plt.xlabel('Date')
+  plt.ylabel('Closing Price USD$')
+  plt.plot(final_df.loc[final_df.index[-500:-days_to_predict],'Close']  , label ='Actual Data'  )
 
-final_model = load_model('final_model.h5')
-
-# Number of days for the sliding window
-window_size = 45
-
-scaler = MinMaxScaler(feature_range=(0,1))
-
-############################################
-# Function to predict future Closing values#
-############################################
-def predict_future_final(df, model, days_to_predict):
-
-  df_tar = df.copy()
-  window = df_tar.values.reshape(-1,5)
-  scaler.fit(window)
-
-  for i in range(0,days_to_predict):
-      # Create a window of the last 'window_size' days
-      window = df_tar.values[-10+1-45:-10+1]
-      window = window.reshape(-1,5)
-      window = scaler.transform(window)
-      window = np.array(window) #Converting into array
-      window = np.reshape(window , (1,window.shape[0], 5))
-      
-
-      # Make a prediction for the next day
-      prediction = model.predict(window)
-      prediction_copies = np.repeat(prediction , 5 , axis =-1)
-      prediction = scaler.inverse_transform(prediction_copies)
-      prediction = prediction[:,0]
-      # Append the predicted value to the DataFrame
-      # next_date = df['date'].max() + timedelta(days=1)
-      # df_target = df.append({ target: prediction}, ignore_index=True)
-      #next_date = df_target.index[-1] + timedelta(days=1)
-      for value in prediction.flatten():
-          df_tar.loc[df_tar.index[-days_to_predict+i], 'Close'] = value
-          #next_date += timedelta(days=1)
-  return df_tar
-
-
-############################################
-########### PLOTTING RESULTS################
-############################################
-
-final_df = predict_future_final(df_with_predicted_features,final_model,days_to_predict)
-print(final_df.tail(15))
-
-plt.figure(figsize = (12,8))
-plt.xlabel('Date')
-plt.ylabel('Close Price USD$')
-plt.plot(final_df.loc[final_df.index[-500:-days_to_predict],'Close']  , label ='Actual Data'  )
-
-plt.plot(final_df.loc[final_df.index[-days_to_predict:],'Close']  , label ='Prediction'  )
-plt.legend()
-plt.show()
-
+  plt.plot(final_df.loc[final_df.index[-days_to_predict:],'Close']  , label ='Prediction'  )
+  plt.legend()
+  st.pyplot()
